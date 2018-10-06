@@ -111,6 +111,6 @@ venv.bak/
 
 *.txt
 
-.*xml
+*.xml
 
 .idea/
