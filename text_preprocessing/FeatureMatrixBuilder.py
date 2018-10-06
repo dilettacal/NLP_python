@@ -3,6 +3,8 @@
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from text_preprocessing.TextPreprocessing import TextPreprocessing
+import pandas as pd
+import numpy as np
 
 class FeatureMatrixBuilder:
 
@@ -25,3 +27,24 @@ class FeatureMatrixBuilder:
 
         feature_matrix = vectorizer.fit_transform(documents).astype(float)
         return vectorizer, feature_matrix
+
+    def build_bowModel(self, corpus, min_df=0., max_df = 1.):
+        count_vectorizer = CountVectorizer(min_df=min_df, max_df=max_df)
+        count_vec_matrix = count_vectorizer.fit_transform(corpus)
+        return count_vec_matrix
+
+    def build_nGram_model(self, corpus, ngram_range = (2,2)):
+        count_vectorizer = CountVectorizer(ngram_range=ngram_range)
+        count_vec_matrix = count_vectorizer.fit_transform(corpus)
+        count_vec_matrix = count_vec_matrix.toarray()
+        voc = count_vectorizer.get_feature_names()
+        df = pd.DataFrame(count_vec_matrix, columns = voc)
+        return df
+
+    def build_TfIdfModel(self, corpus, min_df=0., max_df = 1.):
+        tfidf_vectorizer = TfidfVectorizer(min_df = min_df, max_df = max_df, use_idf=True)
+        tfidf_matrix = tfidf_vectorizer.fit_transform(corpus)
+        tfidf_matrix = tfidf_matrix.toarray()
+        vocab = tfidf_vectorizer.get_feature_names()
+        df = pd.DataFrame(np.round(tfidf_matrix,2), columns=vocab)
+        return df
