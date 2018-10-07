@@ -20,8 +20,9 @@ class TextPreprocessing:
     nlp = spacy.load('de_core_news_sm')
 
     """" Preprocessing methods - clean, stop words removal, lemmatization """
-    def clean_text(self, text: str):
+    def clean_text(self, text):
         """ Removes newlines, tabs and double spaces"""
+        print("Text: ", text)
         cleaned_text = re.sub('\n', '', text)
         cleaned_text = re.sub('\s+', ' ', cleaned_text)
         cleaned_text = re.sub(r'\s([,?.!"](?:\s|$))', r'\1', cleaned_text)
@@ -155,6 +156,7 @@ class TextPreprocessing:
         sents = self.parse_sentences(document)
         filtered_tokens = [self.get_tokens_no_punct(sent) for sent in sents]
         document = [' '.join(token) for token in filtered_tokens]
+        document = ' '.join(document)
         return document
 
 
