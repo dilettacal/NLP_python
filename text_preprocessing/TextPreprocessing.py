@@ -8,7 +8,6 @@ from spacy.lemmatizer import Lemmatizer
 import pandas as pd
 import nltk
 from string import punctuation
-from spacy.tests.pipeline.test_pipe_methods import nlp
 from spacy.lang.de.stop_words import STOP_WORDS as spacy_stops
 
 class TextPreprocessing:
@@ -23,7 +22,7 @@ class TextPreprocessing:
     """" Preprocessing methods - clean, stop words removal, lemmatization """
     def clean_text(self, text: str):
         """ Removes newlines, tabs and double spaces"""
-        cleaned_text = text.replace("\n", " ")
+        cleaned_text = re.sub('\n', '', text)
         cleaned_text = re.sub('\s+', ' ', cleaned_text)
         cleaned_text = re.sub(r'\s([,?.!"](?:\s|$))', r'\1', cleaned_text)
         cleaned_text = re.sub('Mehr zum Thema\:(.*)', '', cleaned_text)
@@ -40,8 +39,7 @@ class TextPreprocessing:
     """ Sentence segmentation """
     def parse_sentences(self, document: str):
         # Parsing mit spacy
-        doc = nlp(document)
-
+        doc = self.nlp(document)
         # Sentence segmentation
         sentences = [sent.text for sent in doc.sents]
         for index, sent in enumerate(sentences):
@@ -60,27 +58,26 @@ class TextPreprocessing:
     """ Lemmatization """
 
     def lemmatization(self, sent):
-        doc = nlp(sent)
+        doc = self.nlp(sent)
         lemmatized_tokens = [token.lemma_ for token in doc]
         lemmatized_text = ' '.join(lemmatized_tokens)
         return lemmatized_text
 
     def lemmatize_tokens_no_punct(self, sent):
-        doc = nlp(sent)
+        doc = self.nlp(sent)
         lemmatized_tokens = [token.lemma_ for token in doc if not token.is_punct]
         return lemmatized_tokens
 
     """ Tokenization """
     def get_tokens_no_punct(self, sent):
-        doc = nlp(sent)
-        tokens = [token.text for token in doc if not token.is_punct]
-        tokens = [token for token in tokens]
-        return tokens
+        doc = self.nlp(sent)
+        remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
+        return [token.lemma_.lower().translate(remove_punct_dict) for token in doc if not token.is_punct or not token.like_num]
 
     def get_important_tokens(self, sent, valid_pos=["PROPN", "VERB", "NOUN", "ADJ"]):
         """Returns a list of important tokens depending on their pos value"""
         valid_pos = valid_pos
-        doc = nlp(sent)
+        doc = self.nlp(sent)
         tokens = [token.text for token in doc if (token.is_alpha and token.pos_ in valid_pos)]
         return tokens
 
@@ -89,14 +86,14 @@ class TextPreprocessing:
         """Return all noun chunks in a list of sentences"""
         valid_chunks = []
         for sentence in sentences:
-            doc = nlp(sentence)
+            doc = self.nlp(sentence)
             chunks = [chunk.text.lower() for chunk in doc.noun_chunks]
             valid_chunks.append(chunks)
         return valid_chunks
 
     def get_chunks_in_sent(self, sent: str):
         """ Returns chunks in a sent as str"""
-        doc = nlp(sent)
+        doc = self.nlp(sent)
         return [chunk.text.lower() for chunk in doc.noun_chunks]
 
     """ Special chars removal """
@@ -112,7 +109,7 @@ class TextPreprocessing:
     def remove_stopwords(self, sent):
         # tokens = get_important_tokens(sent)
         tokens = self.get_tokens_no_punct(sent)
-        filtered_tokens = [token for token in tokens if token.lower() not in STOPWORDS]
+        filtered_tokens = [token for token in tokens if token.lower() not in self.STOPWORDS]
         filtered_text = ' '.join(filtered_tokens)
         return filtered_text
 
@@ -137,11 +134,34 @@ class TextPreprocessing:
                 normalized_corpus.append(text)
         return normalized_corpus
 
-    def normalize_for_other_py_libraries(self, text):
+    def normalize_for_other_py_libraries(self, doc):
         """ Prepare texts for use in other python libraries"""
-        cleaned_text = self.clean_text(text)
-        sents = self.parse_sentences(cleaned_text)
-        return ' '.join(sents)
+        cleaned_doc = self.clean_text(doc)
+        parsed_sents = self.parse_sentences(cleaned_doc)
+        cleaned_doc = self.rebuild_document(parsed_sents)
+        return cleaned_doc
+
+
+    def rebuild_document(self, elem_array):
+        return ''.join(elem_array)
+
+    """ general normalization """
+    def normalize_document(self, document):
+        #1. clean the text
+        document = self.normalize_for_other_py_libraries(document)
+        #2. normalize corpus
+        document = self.remove_spec_chars(document)
+        document = self.remove_stopwords(document)
+        sents = self.parse_sentences(document)
+        filtered_tokens = [self.get_tokens_no_punct(sent) for sent in sents]
+        document = [' '.join(token) for token in filtered_tokens]
+        return document
+
+
+    def similarity_pipeline(self, corpus):
+        norm_corpus =[self.normalize_document(doc) for doc in corpus]
+        all_doc_tokenized = [self.parse_sentences(doc) for doc in corpus]
+        return norm_corpus, all_doc_tokenized
 
 
     """ Build vocabulary """

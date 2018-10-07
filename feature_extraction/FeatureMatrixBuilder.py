@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # Literature: Dipanjan S., "Text Analytics with python", 2016, Apress
+from scipy import sparse
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, TfidfTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from text_preprocessing.TextPreprocessing import TextPreprocessing
 import pandas as pd
 import numpy as np
@@ -41,10 +43,35 @@ class FeatureMatrixBuilder:
         df = pd.DataFrame(count_vec_matrix, columns = voc)
         return df
 
-    def build_TfIdfModel(self, corpus, min_df=0., max_df = 1.):
-        tfidf_vectorizer = TfidfVectorizer(min_df = min_df, max_df = max_df, use_idf=True)
+    def build_TfIdfModel(self, corpus, min_df=0., max_df = 1., vocabulary = None, tokenizer =None):
+        tfidf_vectorizer = TfidfVectorizer(min_df = min_df, max_df = max_df, use_idf=True, vocabulary=vocabulary, tokenizer=tokenizer)
         tfidf_matrix = tfidf_vectorizer.fit_transform(corpus)
         tfidf_matrix = tfidf_matrix.toarray()
         vocab = tfidf_vectorizer.get_feature_names()
         df = pd.DataFrame(np.round(tfidf_matrix,2), columns=vocab)
-        return df
+        return df, tfidf_matrix, tfidf_vectorizer
+
+    def buildSimilarityModel(self, corpus, tokenizer, stopwords, ngram_range=(1,2), vocabulary=None):
+        token_vectorizer = CountVectorizer(tokenizer=tokenizer,vocabulary=vocabulary, stop_words=stopwords, ngram_range= ngram_range)
+        token_vectorizer.fit_transform(corpus)
+        #Term frequency matrix
+        tf_matrix = token_vectorizer.transform(corpus).toarray()
+
+        #compute idf values
+        tfidfTran = TfidfTransformer(norm="l2")
+        tfidfTran.fit(tf_matrix)
+
+        #create tf-idf matrix
+        tfidf_matrix = tfidfTran.transform(tf_matrix)
+
+        #compute similarity matrix
+        cos_similarity_matrix = (tfidf_matrix * tfidf_matrix.T).toarray()
+
+        A_sparse = sparse.csr_matrix(tfidf_matrix)
+        similarities = cosine_similarity(A_sparse)
+
+        vocab = token_vectorizer.get_feature_names()
+        df = None
+        df = pd.DataFrame(np.round(tf_matrix,2), columns=vocab)
+
+        return similarities, tfidf_matrix, token_vectorizer, df
