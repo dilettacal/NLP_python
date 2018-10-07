@@ -20,3 +20,9 @@ Dataset(s):
 - numpy
 - networkX
 - gensim
+
+<b> Literature/Inspiration </b>
+- Sarkar, Bali, Sharma - "Practical Machine Learning with Python", Apress
+- Sarkar - "Text Analytics with Python", Apress 
+- Cucci - "A tu per tu col Machine Learning", thedotcompany
+- Thanaki - "Python Natural Language Processing: Advanced machine learning and deep learning techniques for natural language processing. Packt Publishing. Kindle-Version. 
