@@ -84,6 +84,9 @@ ex = ts.similarity(example)
 print(ex[0])
 print(ex[3])
 
-
+all_texts = []
+all_texts.append(all_text1)
+all_texts.append(all_text2)
+similarity_sklearn = ts.similarity(all_texts)
 
 
