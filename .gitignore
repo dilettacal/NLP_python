@@ -113,5 +113,8 @@ venv.bak/
 
 *.xml
 
+
+train.de
+train.en
 .idea/
 data/
