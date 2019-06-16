@@ -5,9 +5,9 @@ http://blog.christianperone.com/2011/10/machine-learning-text-feature-extraction
 """
 import spacy
 
-from text_preprocessing.CSVDataReader import CSVDataReader
-from text_preprocessing.TextPreprocessing import TextPreprocessing
-from feature_extraction.FeatureMatrixBuilder import FeatureMatrixBuilder
+from ..text_preprocessing.CSVDataReader import CSVDataReader
+from ..text_preprocessing.TextPreprocessing import TextPreprocessing
+from ..feature_extraction.FeatureMatrixBuilder import FeatureMatrixBuilder
 import itertools as it
 
 
